@@ -4,6 +4,8 @@ This project does exactly what it says
 
 It's an proxy written in GO that allows to connect to SSH server over WebSocket - just from your browser
 
+I wrote it for other project, but maybe will be useful for somebody
+
 ## Features
 
 - SSH connection via WebSockets
