@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="xterm.css" />
+    <title>SSH over WebSocket</title>
+    <style>
+        #terminal {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+    <script src="xterm.js"></script>
+    <script>
+        const term = new Terminal();
+        const textDecoder = new TextDecoder();
+
+        term.open(document.getElementById('terminal'));
+        term.writeln('Connecting to SSH server...');
+        let currentLocation = window.location.host;
+        let prefix = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(prefix + currentLocation + '/ssh');
+        socket.binaryType = 'arraybuffer';
+
+        socket.onopen = function () {
+            term.writeln('Connected to the server.');
+        };
+
+        socket.onmessage = function(event) {
+            if (typeof event.data === 'string') {
+                term.write(event.data);
+            } else {
+                const text = textDecoder.decode(new Uint8Array(event.data));
+                term.write(text);
+            }
+        };
+
+        socket.onerror = function (event) {
+            console.error('WebSocket error:', event);
+            term.writeln('WebSocket error. See console for details.');
+        };
+
+        socket.onclose = function () {
+            term.writeln('Disconnected from the server.');
+        };
+
+        term.onData(function(data) {
+            socket.send(data);
+        });
+    </script>
+</body>
+</html>
