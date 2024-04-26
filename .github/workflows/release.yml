@@ -53,8 +53,6 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-      with:
-        path: 'src'  # Correct path to your Go code
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -70,14 +68,14 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v -o sshtows-${{ matrix.binary-suffix }} main.go
+      run: cd src && go build -v -o sshtows-${{ matrix.binary-suffix }} main.go
 
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: sshtows-${{ matrix.binary-suffix }}
-        path: sshtows-${{ matrix.binary-suffix }}
+        path: src/sshtows-${{ matrix.binary-suffix }}
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
