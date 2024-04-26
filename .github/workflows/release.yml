@@ -63,7 +63,7 @@ jobs:
       run: |
         echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
         echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
-        if [ "${{ matrix.goarm }}" != "" ]; then
+        if [ "${{ matrix.goarch }}" == "arm" ]; then
           echo "GOARM=${{ matrix.goarm }}" >> $GITHUB_ENV
         fi
 
