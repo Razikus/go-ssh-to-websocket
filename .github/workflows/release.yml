@@ -70,7 +70,7 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v -o sshtows-${{ matrix.binary-suffix }} ./...
+      run: go build -v -o sshtows-${{ matrix.binary-suffix }} main.go
 
 
     - name: Upload Artifacts
