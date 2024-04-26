@@ -21,8 +21,15 @@ jobs:
       with:
         go-version: 1.22
 
+    - name: Determine Version
+      id: determine_version
+      run: echo ::set-output name=VERSION::$(echo "${{ github.ref }}" | sed 's,.*/\(.*\),\1,')
+
+
     - name: Build
-      run: cd src && make all
+      run: |
+        cd src
+        make all VERSION=${{ steps.determine_version.outputs.VERSION }}
 
 
     - name: Upload Artifacts
@@ -30,11 +37,11 @@ jobs:
       with:
         path: src/bin/*
 
-    # - name: Create Release
-    #   if: startsWith(github.ref, 'refs/tags/')
-    #   uses: softprops/action-gh-release@v2
-    #   with:
-    #     files: |
-    #       sshtows-${{ matrix.binary-suffix }}
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.TOKEN }}
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          src/bin/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
