@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main  # The branch containing your code
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.22]  # Using Go version 1.22
+        include:
+          # Standard architectures
+          - os: ubuntu-latest
+            arch: amd64
+            goos: linux
+            goarch: amd64
+            binary-suffix: linux-amd64
+          - os: ubuntu-latest
+            arch: arm64
+            goos: linux
+            goarch: arm64
+            binary-suffix: linux-arm64
+          - os: windows-latest
+            arch: amd64
+            goos: windows
+            goarch: amd64
+            binary-suffix: windows-amd64
+          # Raspberry Pi architectures
+          - os: ubuntu-latest
+            arch: armv6
+            goos: linux
+            goarch: arm
+            goarm: 6
+            binary-suffix: linux-armv6  # Raspberry Pi Zero
+          - os: ubuntu-latest
+            arch: armv7
+            goos: linux
+            goarch: arm
+            goarm: 7
+            binary-suffix: linux-armv7  # Raspberry Pi 3
+          - os: ubuntu-latest
+            arch: arm64
+            goos: linux
+            goarch: arm64
+            binary-suffix: linux-arm64  # Raspberry Pi 4
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+      with:
+        path: 'src'  # Correct path to your Go code
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Set up Go environment variables
+      run: |
+        echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
+        echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+        if [ "${{ matrix.goarm }}" != "" ]; then
+          echo "GOARM=${{ matrix.goarm }}" >> $GITHUB_ENV
+        fi
+
+    - name: Build
+      run: go build -v -o sshtows-${{ matrix.binary-suffix }} ./...
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sshtows-${{ matrix.binary-suffix }}
+        path: sshtows-${{ matrix.binary-suffix }}
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          sshtows-${{ matrix.binary-suffix }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
