@@ -11,45 +11,6 @@ jobs:
   build:
     name: Build and Release
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]  # Define operating systems in the matrix
-        go-version: [1.22]
-        include:
-          # Standard architectures
-          - os: ubuntu-latest
-            arch: amd64
-            goos: linux
-            goarch: amd64
-            binary-suffix: linux-amd64
-          - os: ubuntu-latest
-            arch: arm64
-            goos: linux
-            goarch: arm64
-            binary-suffix: linux-arm64
-          - os: windows-latest  # Specify the correct OS for this architecture
-            arch: amd64
-            goos: windows
-            goarch: amd64
-            binary-suffix: windows-amd64
-          # Raspberry Pi architectures
-          - os: ubuntu-latest
-            arch: armv6
-            goos: linux
-            goarch: arm
-            goarm: 6
-            binary-suffix: linux-armv6  # Raspberry Pi Zero
-          - os: ubuntu-latest
-            arch: armv7
-            goos: linux
-            goarch: arm
-            goarm: 7
-            binary-suffix: linux-armv7  # Raspberry Pi 3
-          - os: ubuntu-latest
-            arch: arm64
-            goos: linux
-            goarch: arm64
-            binary-suffix: linux-arm64  # Raspberry Pi 4
 
     steps:
     - name: Check out code
@@ -58,31 +19,22 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: ${{ matrix.go-version }}
-
-    - name: Set up Go environment variables
-      run: |
-        echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
-        echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
-        if [ "${{ matrix.goarch }}" == "arm" ]; then
-          echo "GOARM=${{ matrix.goarm }}" >> $GITHUB_ENV
-        fi
+        go-version: 1.22
 
     - name: Build
-      run: cd src && go build -v -o sshtows-${{ matrix.binary-suffix }} main.go
+      run: cd src && make all
 
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: sshtows-${{ matrix.binary-suffix }}
-        path: src/sshtows-${{ matrix.binary-suffix }}
+        path: src/bin/*
 
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          sshtows-${{ matrix.binary-suffix }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+    # - name: Create Release
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   uses: softprops/action-gh-release@v2
+    #   with:
+    #     files: |
+    #       sshtows-${{ matrix.binary-suffix }}
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.TOKEN }}
