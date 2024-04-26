@@ -1,0 +1,38 @@
+
+version: '3'
+
+services:
+  traefik:
+    image: traefik:v2.5
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.enable=true"
+
+  sshtows:
+    image: docker.io/razikus/sshtows:1.0
+    environment:
+      SSH_USER: "USER"
+      SSH_PASS: "PASS"
+      SSH_HOST: "HOST"
+      SSH_PORT: "PORT"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sshtows-websocket.rule=Path(`/ssh`)"
+      - "traefik.http.routers.sshtows-websocket.entrypoints=web"
+      - "traefik.http.routers.sshtows-websocket.middlewares=sshtows-stripprefix"
+      - "traefik.http.routers.sshtows-static.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.sshtows-static.entrypoints=web"
+      - "traefik.http.middlewares.sshtows-stripprefix.stripprefix.prefixes=/ssh"
+
+
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$ro0zs3dk$$q7CjVX8gtmOrspmhSj5ki0"
+      - "traefik.http.routers.sshtows-websocket.middlewares=sshtows-stripprefix,auth"
+      - "traefik.http.routers.sshtows-static.middlewares=auth"

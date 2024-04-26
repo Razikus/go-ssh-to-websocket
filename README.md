@@ -39,4 +39,17 @@ SSH_PORT="22"
 MOUNT_HTML="true"
 ```
 
+## Docker compose with basic auth
 
+In docker-compose there is example how to setup basic proxy with basic auth 
+
+In order to change credentials from default (admin : admin) user need to follow traefik tutorial
+```
+https://doc.traefik.io/traefik/middlewares/http/basicauth/
+```
+
+Here you can create htpasswd online (remember to escape $ with $$)
+
+```
+https://hostingcanada.org/htpasswd-generator/
+```
