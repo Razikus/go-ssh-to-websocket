@@ -6,6 +6,10 @@ It's an proxy written in GO that allows to connect to SSH server over WebSocket 
 
 I wrote it for other project, but maybe will be useful for somebody
 
+
+![GO SSH TO WEBSOCKET](https://github.com/username/repository/blob/master/image.png)
+
+
 ## Features
 
 - SSH connection via WebSockets
