@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.22]  # Using Go version 1.22
+        os: [ubuntu-latest, windows-latest]  # Define operating systems in the matrix
+        go-version: [1.22]
         include:
           # Standard architectures
           - os: ubuntu-latest
@@ -26,7 +27,7 @@ jobs:
             goos: linux
             goarch: arm64
             binary-suffix: linux-arm64
-          - os: windows-latest
+          - os: windows-latest  # Specify the correct OS for this architecture
             arch: amd64
             goos: windows
             goarch: amd64
