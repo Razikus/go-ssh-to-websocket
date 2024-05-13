@@ -39,7 +39,9 @@ SSH_PORT="22"
 MOUNT_HTML="true"
 ```
 
-## Docker compose with basic auth
+## Docker compose with basic auth and simple SSH container
+
+- 13.05.2024 - just added simple SSH container to make ability to log in inside the system out of the box.
 
 In docker-compose there is example how to setup basic proxy with basic auth 
 
