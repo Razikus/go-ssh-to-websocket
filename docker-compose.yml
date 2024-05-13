@@ -16,13 +16,17 @@ services:
     labels:
       - "traefik.enable=true"
 
+  sshcontainer:
+    build:
+      context: ssh-container
+
   sshtows:
     image: docker.io/razikus/sshtows:1.0
     environment:
-      SSH_USER: "USER"
-      SSH_PASS: "PASS"
-      SSH_HOST: "HOST"
-      SSH_PORT: "PORT"
+      SSH_USER: "admin"
+      SSH_PASS: "admin123123"
+      SSH_HOST: "sshcontainer"
+      SSH_PORT: "22"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sshtows-websocket.rule=Path(`/ssh`)"
@@ -31,7 +35,6 @@ services:
       - "traefik.http.routers.sshtows-static.rule=PathPrefix(`/`)"
       - "traefik.http.routers.sshtows-static.entrypoints=web"
       - "traefik.http.middlewares.sshtows-stripprefix.stripprefix.prefixes=/ssh"
-
 
       - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$ro0zs3dk$$q7CjVX8gtmOrspmhSj5ki0"
       - "traefik.http.routers.sshtows-websocket.middlewares=sshtows-stripprefix,auth"
