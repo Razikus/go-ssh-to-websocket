@@ -21,7 +21,7 @@ I wrote it for other project, but maybe will be useful for somebody
 
 ```
 
-docker run -p 8280:8280 -e SSH_USER=USER -e SSH_PASS=PASS -e SSH_HOST=HOST -e SSH_PORT=PORT --rm docker.io/razikus/sshtows:1.0
+docker run -p 8280:8280 -e SSH_USER=USER -e SSH_PASS=PASS -e SSH_HOST=HOST -e SSH_PORT=PORT --rm docker.io/razikus/sshtows:1.0.1
 
 ```
 
