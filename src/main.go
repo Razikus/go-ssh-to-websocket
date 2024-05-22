@@ -1,15 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/ssh"
 )
+
+type TerminalSize struct {
+	Cols int `json:"cols"`
+	Rows int `json:"rows"`
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -20,10 +25,10 @@ var upgrader = websocket.Upgrader{
 }
 
 func sshHandler(w http.ResponseWriter, r *http.Request) {
-	user := os.Getenv("SSH_USER")
-	pass := os.Getenv("SSH_PASS")
-	host := os.Getenv("SSH_HOST")
-	port := os.Getenv("SSH_PORT")
+	user := "root"
+	pass := "plokij2wsx3edc2$"
+	host := "172.16.0.69"
+	port := "22"
 
 	hostport := fmt.Sprintf("%s:%s", host, port)
 
@@ -68,7 +73,20 @@ func sshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := session.RequestPty("xterm", 80, 40, ssh.TerminalModes{}); err != nil {
+	var termSize TerminalSize
+	if err := wsConn.ReadJSON(&termSize); err != nil {
+		log.Println("Read terminal size error:", err)
+		return
+	}
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          1,
+		ssh.TTY_OP_ISPEED: 8192,
+		ssh.TTY_OP_OSPEED: 8192,
+		ssh.IEXTEN:        0,
+	}
+
+	if err := session.RequestPty("xterm", termSize.Cols, termSize.Rows, modes); err != nil {
 		log.Println("Request PTY error:", err)
 		return
 	}
@@ -107,64 +125,41 @@ func sshHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		if messageType == websocket.BinaryMessage || messageType == websocket.TextMessage {
-			_, err = sshIn.Write(p)
-			if err != nil {
-				log.Println("Write to SSH stdin error:", err)
-				return
+		if messageType == websocket.TextMessage {
+			var newSize TerminalSize
+			if err := json.Unmarshal(p, &newSize); err == nil {
+				// Resize terminal
+				//log.Printf("Resizing terminal to cols: %d, rows: %d", newSize.Cols, newSize.Rows)
+				session.WindowChange(newSize.Rows, newSize.Cols)
+			} else {
+				// Write to SSH stdin
+				_, err = sshIn.Write(p)
+				if err != nil {
+					log.Println("Write to SSH stdin error:", err)
+					return
+				}
 			}
 		}
 	}
 }
 
-func checkForVariables() error {
-	if os.Getenv("SSH_USER") == "" {
-		return fmt.Errorf("SSH_USER is not set")
-	}
-	if os.Getenv("SSH_PASS") == "" {
-		return fmt.Errorf("SSH_PASS is not set")
-	}
-	if os.Getenv("SSH_HOST") == "" {
-		return fmt.Errorf("SSH_HOST is not set")
-	}
-	if os.Getenv("SSH_PORT") == "" {
-		return fmt.Errorf("SSH_PORT is not set")
-	}
-	return nil
-}
-
-func printUsage() {
-	fmt.Println("Usage (set proper environmental variables): ")
-	fmt.Println("SSH_USER - username for ssh connection")
-	fmt.Println("SSH_PASS - password for ssh connection")
-	fmt.Println("SSH_HOST - host for ssh connection")
-	fmt.Println("SSH_PORT - port for ssh connection")
-	fmt.Println("MOUNT_HTML - mount html files (default true, set to false to disable)")
-
-}
 func main() {
-	errOf := checkForVariables()
-	if errOf != nil {
-
-		printUsage()
-		log.Fatal(errOf)
-	}
-	shouldMountHTML := os.Getenv("MOUNT_HTML") == "true" || os.Getenv("MOUNT_HTML") == ""
 	http.HandleFunc("/ssh", sshHandler)
 
-	if shouldMountHTML {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "index.html")
-		})
-		http.HandleFunc("/xterm.css", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "xterm.css")
-		})
-		http.HandleFunc("/xterm.js", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "xterm.js")
-		})
-	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+	http.HandleFunc("/xterm.css", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "xterm.css")
+	})
+	http.HandleFunc("/xterm.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "xterm.js")
+	})
+
+	http.HandleFunc("/xterm-addon-fit.min.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "xterm-addon-fit.min.js")
+	})
 
 	fmt.Println("Starting server on :8280")
 	log.Fatal(http.ListenAndServe(":8280", nil))
-
 }
